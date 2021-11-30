@@ -1,6 +1,6 @@
 # https://help.github.com/articles/about-codeowners/
-/apis/poi/ @viperdanadev/panagiotag
-/apis/trips/ @viperdanadev/swati24may
-/apis/user-java/ @viperdanadev/jrkhatod
-/apis/userprofile/ @viperdanadev/shaleenthapa
+/apis/poi/ @panagiotag
+/apis/trips/ @swati24may
+/apis/user-java/ @jrkhatod
+/apis/userprofile/ @shaleenthapa
 
