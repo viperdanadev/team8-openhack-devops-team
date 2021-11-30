@@ -1,3 +1,4 @@
+[![Board Status](https://dev.azure.com/team8-tripviewer/970f3796-9249-49fb-993b-80a08d837293/4b54f354-85c5-4513-8518-8782f7e2557e/_apis/work/boardbadge/3623c615-d02e-4a18-a87d-cbca9c73b994)](https://dev.azure.com/team8-tripviewer/970f3796-9249-49fb-993b-80a08d837293/_boards/board/t/4b54f354-85c5-4513-8518-8782f7e2557e/Microsoft.RequirementCategory)
 ---
 page_type: sample
 languages:
