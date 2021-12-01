@@ -11,7 +11,7 @@ pool:
 
 variables:
   group: vg-poi-api
-  solution: '$(poiSolutionFilePath)'
+  solution: '/apis/poi/poi.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
