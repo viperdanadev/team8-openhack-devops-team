@@ -10,9 +10,7 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
-  group: vg-poi-api
-  buildPlatform: 'Any CPU'
-  buildConfiguration: 'Release'
+- group: vg-poi-api
 
 
 steps:
