@@ -10,7 +10,7 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
-- group: vg-poi-api
+  group: vg-poi-api
   solution: '$(poiSolutionFilePath)'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
