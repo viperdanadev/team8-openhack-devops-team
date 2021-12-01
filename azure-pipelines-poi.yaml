@@ -4,7 +4,12 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
 
 trigger:
-- dev
+  branches:
+    include:
+    - dev
+  paths:
+    include:
+      - apis/poi
 
 pool:
   vmImage: 'windows-latest'
