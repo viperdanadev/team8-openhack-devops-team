@@ -16,6 +16,10 @@ pool:
 
 variables:
 - group: vg-poi-api
+- name: buildConfiguration
+  value: 'Release'
+- name: buildPlatform
+  value: 'Any CPU'
 
 
 steps:
