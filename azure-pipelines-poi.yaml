@@ -10,10 +10,11 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
+  solution: '$(poiSolutionFilePath)'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
 - group: vg-poi-api
-- solution: '$(poiSolutionFilePath)'
-- buildPlatform: 'Any CPU'
-- buildConfiguration: 'Release'
+
 
 steps:
 - task: NuGetToolInstaller@1
