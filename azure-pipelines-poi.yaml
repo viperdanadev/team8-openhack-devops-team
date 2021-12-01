@@ -3,6 +3,12 @@
 # Add steps that publish symbols, save build artifacts, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
 
+parameters:
+- name: succeed
+  displayName: Succeed or fail
+  type: boolean
+  default: false
+
 pr:
   branches:
     include:
