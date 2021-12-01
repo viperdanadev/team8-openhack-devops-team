@@ -64,3 +64,22 @@ stages:
          WebAppName: $(webAppName)
          deployToSlotOrASE: true
          SlotName: $(slotName)
+         
+- stage: Prod
+  displayName: 'Deploy App to Production'
+  dependsOn: DeployStagingStage
+  condition: and(contains(variables['build.sourceBranch'], 'refs/heads/main'), succeeded())
+  jobs:
+  - job:  DeployApp
+    displayName: 'Deploy App Production'
+    steps:
+    - task: AzureRmWebAppDeployment@4
+      inputs:
+         appType: webAppContainer
+         DockerRepository: $(imageRepository)
+         DockerNamespace: $(containerRegistry)
+         DockerImageTag: $(tag)
+         ConnectionType: AzureRM            
+         ConnectedServiceName: 'azure'
+         ResourceGroupName: $(resourceGroup)
+         WebAppName: $(webAppName)
