@@ -16,7 +16,7 @@ variables:
   resourceGroup: 'openhack0ok2ryx3rg'
   webAppName: 'openhack0ok2ryx3userprofile'
   slotName: 'staging'
-  dockerfilePath: '$(Build.SourcesDirectory)/apis/userprofile/web/Dockerfile'
+  dockerfilePath: '$(Build.SourcesDirectory)/apis/userprofile/Dockerfile'
   tag: '$(Build.BuildId)'
 
   # Agent VM image name
