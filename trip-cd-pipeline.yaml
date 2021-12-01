@@ -4,6 +4,9 @@
 # Test
 trigger:
 - dev
+paths:
+    include:
+      - apis/trips
 
 resources:
 - repo: self
