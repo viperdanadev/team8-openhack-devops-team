@@ -3,8 +3,10 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/docker
 # Test
 trigger:
-- dev
-paths:
+  branches:
+    include:
+    - main
+  paths:
     include:
       - apis/trips
 
