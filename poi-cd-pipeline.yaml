@@ -13,6 +13,9 @@ variables:
   dockerRegistryServiceConnection: '9c5f4690-77b4-4139-9fc5-c54c9b94b91e'
   imageRepository: 'devopsoh/api-poi'
   containerRegistry: 'openhack0ok2ryx3acr.azurecr.io'
+  resourceGroup: 'openhack0ok2ryx3rg'
+  webAppName: 'openhack0ok2ryx3poi'
+  slotName: 'staging'
   dockerfilePath: '$(Build.SourcesDirectory)/apis/poi/web/Dockerfile'
   tag: '$(Build.BuildId)'
 
@@ -37,3 +40,22 @@ stages:
         containerRegistry: $(dockerRegistryServiceConnection)
         tags: |
           $(tag)
+ - stage: DeployStagingStage
+   displayName: 'Deploy App to Staging Slot'
+   dependsOn: Build
+   jobs:
+   - job:  DeployApp
+     displayName: 'Deploy App'
+     steps:
+     - task: AzureRmWebAppDeployment@4
+       inputs:
+          appType: webAppContainer
+          DockerRepository: $(imageRepository)
+          DockerNamespace: $(containerRegistry)
+          DockerImageTag: $(tag)
+          ConnectionType: AzureRM            
+          ConnectedServiceName: 'azure'
+          ResourceGroupName: $(resourceGroup)
+          WebAppName: $(webAppName)
+          deployToSlotOrASE: true
+          SlotName: $(slotName)
