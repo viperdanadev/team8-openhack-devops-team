@@ -4,11 +4,11 @@
 
 trigger:
  branches:
-    include:
-    - dev
-  paths:
-    include:
-      - apis/userprofile
+  include:
+  - dev
+ paths:
+  include:
+  - apis/userprofile
 
 resources:
 - repo: self
