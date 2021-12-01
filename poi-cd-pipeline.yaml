@@ -40,22 +40,23 @@ stages:
         containerRegistry: $(dockerRegistryServiceConnection)
         tags: |
           $(tag)
- - stage: DeployStagingStage
-   displayName: 'Deploy App to Staging Slot'
-   dependsOn: Build
-   jobs:
-   - job:  DeployApp
-     displayName: 'Deploy App'
-     steps:
-     - task: AzureRmWebAppDeployment@4
-       inputs:
-          appType: webAppContainer
-          DockerRepository: $(imageRepository)
-          DockerNamespace: $(containerRegistry)
-          DockerImageTag: $(tag)
-          ConnectionType: AzureRM            
-          ConnectedServiceName: 'azure'
-          ResourceGroupName: $(resourceGroup)
-          WebAppName: $(webAppName)
-          deployToSlotOrASE: true
-          SlotName: $(slotName)
+          
+- stage: DeployStagingStage
+  displayName: 'Deploy App to Staging Slot'
+  dependsOn: Build
+  jobs:
+  - job:  DeployApp
+    displayName: 'Deploy App'
+    steps:
+    - task: AzureRmWebAppDeployment@4
+      inputs:
+         appType: webAppContainer
+         DockerRepository: $(imageRepository)
+         DockerNamespace: $(containerRegistry)
+         DockerImageTag: $(tag)
+         ConnectionType: AzureRM            
+         ConnectedServiceName: 'azure'
+         ResourceGroupName: $(resourceGroup)
+         WebAppName: $(webAppName)
+         deployToSlotOrASE: true
+         SlotName: $(slotName)
