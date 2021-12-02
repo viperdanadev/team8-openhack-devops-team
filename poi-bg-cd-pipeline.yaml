@@ -148,7 +148,6 @@ stages:
   jobs:  
   - job: Rollback
     displayName: 'Roll back'
-    dependsOn: ErrorHandlerProd
     steps:
     - task: AzureAppServiceManage@0
       inputs:
