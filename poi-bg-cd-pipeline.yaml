@@ -53,6 +53,19 @@ stages:
   displayName: 'Deploy App to Staging Slot'
   dependsOn: Build
   jobs:
+  # Start Staging
+  - job: StartStagingSlot
+    displayName: 'Start Staging Slot'
+    steps:
+      - task: AzureAppServiceManage@0
+        displayName: 'Start Azure App Service in staging'
+        inputs:
+          azureSubscription: 'azure'
+          Action: 'Start Azure App Service'
+          WebAppName: $(webAppName)
+          SpecifySlotOrASE: true
+          ResourceGroupName: $(resourceGroup)
+          Slot: $(slotName)
   - job:  DeployApp
     displayName: 'Deploy App in Dev'
     steps:
