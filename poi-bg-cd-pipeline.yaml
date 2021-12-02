@@ -1,0 +1,191 @@
+# Docker
+# Build and push an image to Azure Container Registry
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+# Test
+trigger:
+  branches:
+    include:
+    - main
+  paths:
+    include:
+      - apis/poi
+      
+resources:
+- repo: self
+
+variables:
+  # Container registry service connection established during pipeline creation
+  dockerRegistryServiceConnection: '9c5f4690-77b4-4139-9fc5-c54c9b94b91e'
+  imageRepository: 'devopsoh/api-poi'
+  containerRegistry: 'openhack0ok2ryx3acr.azurecr.io'
+  resourceGroup: 'openhack0ok2ryx3rg'
+  webAppName: 'openhack0ok2ryx3poi'
+  slotName: 'staging'
+  dockerfilePath: '$(Build.SourcesDirectory)/apis/poi/web/Dockerfile'
+  tag: '$(Build.BuildId)'
+  stagingEndpoint: 'https://openhack0ok2ryx3poi-staging.azurewebsites.net/api/healthcheck/poi'
+  endpoint: 'https://openhack0ok2ryx3poi.azurewebsites.net/api/healthcheck/poi'
+  simulateFailure: 'false'
+
+  # Agent VM image name
+  vmImageName: 'ubuntu-latest'
+
+stages:
+- stage: Build
+  displayName: Build and push stage
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        command: buildAndPush
+        repository: $(imageRepository)
+        dockerfile: $(dockerfilePath)
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          $(tag)
+          
+- stage: DeployStagingStage
+  displayName: 'Deploy App to Staging Slot'
+  dependsOn: Build
+  jobs:
+  # Start Staging
+  - job: StartStagingSlot
+    displayName: 'Start Staging Slot'
+    steps:
+      - task: AzureAppServiceManage@0
+        displayName: 'Start Azure App Service in staging'
+        inputs:
+          azureSubscription: 'azure'
+          Action: 'Start Azure App Service'
+          WebAppName: $(webAppName)
+          SpecifySlotOrASE: true
+          ResourceGroupName: $(resourceGroup)
+          Slot: $(slotName)
+  - job:  DeployApp
+    displayName: 'Deploy App in Dev'
+    steps:
+    - task: AzureRmWebAppDeployment@4
+      inputs:
+         appType: webAppContainer
+         DockerRepository: $(imageRepository)
+         DockerNamespace: $(containerRegistry)
+         DockerImageTag: $(tag)
+         ConnectionType: AzureRM            
+         ConnectedServiceName: 'azure'
+         ResourceGroupName: $(resourceGroup)
+         WebAppName: $(webAppName)
+         deployToSlotOrASE: true
+         SlotName: $(slotName)
+         
+    - task: Bash@3
+      inputs:
+        targetType: 'filePath'
+        filePath: 'apis/polling.sh'
+        arguments: '-i $(endpoint)'
+        failOnStderr: true 
+
+# This job creates a work item, and only runs if the previous job failed
+  - job: ErrorHandler
+    dependsOn: DeployApp
+    condition: failed()
+    steps: 
+      - bash: |
+          az boards work-item create \
+          --title "Build $(build.buildNumber) failed with ImageID $(tag)" \
+          --type issue \
+          --org $(System.TeamFoundationCollectionUri) \
+          --project $(System.TeamProject)
+        env: 
+         AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
+        displayName: 'Create work item on URL production not healthy'
+
+- stage: Prod
+  displayName: 'Deploy App to Production'
+  dependsOn: DeployStagingStage
+  condition: succeeded()
+  jobs:
+  - job:  DeployAppProd
+    displayName: 'Deploy App Production'
+    steps:
+    - task: AzureAppServiceManage@0
+      inputs:
+        azureSubscription: 'azure'
+        action: 'Swap Slots' 
+        webAppName: $(webAppName)
+        ResourceGroupName: $(resourceGroup)
+        sourceSlot: $(slotName)
+        swapWithProduction: true
+        targetSlot: 'production'
+    - task: Bash@3
+      inputs:
+        targetType: 'filePath'
+        filePath: 'apis/polling.sh'
+        arguments: '-i $(endpoint)'  #check on the new build
+        failOnStderr: true 
+
+    # simulate failure
+    - script: git clone malformed input
+      condition: eq(variables.simulateFailure, 'true')
+    
+# This job creates a work item, and only runs if the previous job failed
+  - job: ErrorHandlerProd
+    dependsOn: DeployAppProd
+    condition: failed()
+    steps: 
+      - bash: |
+          az boards work-item create \
+          --title "Build $(build.buildNumber) failed with ImageID $(tag)" \
+          --type issue \
+          --org $(System.TeamFoundationCollectionUri) \
+          --project $(System.TeamProject)
+        env: 
+         AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
+        displayName: 'Create work item on failure of production deployment'
+      - task: Bash@3
+        inputs:
+          targetType: 'filePath'
+          filePath: 'apis/polling.sh'
+          arguments: '-i $(stagingEndpoint)'  #check on the new build
+          failOnStderr: true
+
+  # Stop Staging
+  - job: StopStagingSlot
+    displayName: 'Stop Staging Slot'
+    dependsOn: DeployAppProd
+    condition: succeeded()
+    steps:
+      - task: AzureAppServiceManage@0
+        displayName: 'Stop Azure App Service in staging'
+        inputs:
+          azureSubscription: 'azure'
+          Action: 'Stop Azure App Service'
+          WebAppName: $(webAppName)
+          SpecifySlotOrASE: true
+          ResourceGroupName: $(resourceGroup)
+          Slot: $(slotName)
+
+
+
+#Roll back   
+- stage: Rollback
+  displayName: 'Rollback the deployment'
+  condition: failed()
+  dependsOn: Prod   
+  jobs:  
+  - job: Rollback
+    displayName: 'Roll back'
+    steps:
+    - task: AzureAppServiceManage@0
+      inputs:
+        azureSubscription: 'azure'
+        action: 'Swap Slots' 
+        webAppName: $(webAppName)
+        ResourceGroupName: $(resourceGroup)
+        sourceSlot: 'production'
+        swapWithProduction: false
+        targetSlot: $(slotName)
