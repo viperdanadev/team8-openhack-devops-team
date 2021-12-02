@@ -74,6 +74,7 @@ while [[ true ]]; do
     fi    
    else
     #We come here if the slot is not healty
+    echo $status
     bStatus=false
     break
    fi
