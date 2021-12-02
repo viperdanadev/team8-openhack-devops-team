@@ -25,6 +25,7 @@ variables:
   tag: '$(Build.BuildId)'
   stagingEndpoint: 'https://openhack0ok2ryx3poi-staging.azurewebsites.net/api/healthcheck/poi'
   endpoint: 'https://openhack0ok2ryx3poi.azurewebsites.net/api/healthcheck/poi'
+  simulateFailure: 'true'
 
   # Agent VM image name
   vmImageName: 'ubuntu-latest'
@@ -113,6 +114,10 @@ stages:
         filePath: 'apis/polling.sh'
         arguments: '-i $(endpoint)'  #check on the new build
         failOnStderr: true 
+
+    # simulate failure
+   - script: git clone malformed input
+     condition: eq(variables.simulateFailure, 'true')
     
 # This job creates a work item, and only runs if the previous job failed
   - job: ErrorHandlerProd
@@ -135,20 +140,21 @@ stages:
           arguments: '-i $(stagingEndpoint)'  #check on the new build
           failOnStderr: true
 
+#Roll back   
 - stage: Rollback
-  displayName: 'Roll Back to Staging'
-  dependsOn: ErrorHandlerProd
-  condition: succeeded()
-  jobs:
-    - job:  RollBackProd
-      displayName: 'Roll Back Production'
-      steps:
-      - task: AzureAppServiceManage@0
-        inputs:
-          azureSubscription: 'azure'
-          action: 'Swap Slots' 
-          webAppName: $(webAppName)
-          ResourceGroupName: $(resourceGroup)
-          sourceSlot: 'production'
-          swapWithProduction: true
-          targetSlot: $(slotName)
+  displayName: 'Rollback the deployment'
+  condition: failed()
+  dependsOn: Prod     
+  - job:  Rollback
+    displayName: 'Roll back'
+    dependsOn: ErrorHandlerProd
+    steps:
+    - task: AzureAppServiceManage@0
+      inputs:
+        azureSubscription: 'azure'
+        action: 'Swap Slots' 
+        webAppName: $(webAppName)
+        ResourceGroupName: $(resourceGroup)
+        sourceSlot: 'production'
+        swapWithProduction: false
+        targetSlot: $(slotName)
