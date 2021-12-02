@@ -134,19 +134,21 @@ stages:
           filePath: 'apis/polling.sh'
           arguments: '-i $(stagingEndpoint)'  #check on the new build
           failOnStderr: true
-          
-#Roll back         
-  - job:  Rollback
-    displayName: 'Roll back'
-    dependsOn: ErrorHandlerProd
-    condition: succeeded()
-    steps:
-    - task: AzureAppServiceManage@0
-      inputs:
-        azureSubscription: 'azure'
-        action: 'Swap Slots' 
-        webAppName: $(webAppName)
-        ResourceGroupName: $(resourceGroup)
-        sourceSlot: 'production'
-        swapWithProduction: false
-        targetSlot: $(slotName)
+
+- stage: Rollback
+  displayName: 'Roll Back to Staging'
+  dependsOn: ErrorHandlerProd
+  condition: succeeded()
+  jobs:
+    - job:  RollBackProd
+      displayName: 'Roll Back Production'
+      steps:
+      - task: AzureAppServiceManage@0
+        inputs:
+          azureSubscription: 'azure'
+          action: 'Swap Slots' 
+          webAppName: $(webAppName)
+          ResourceGroupName: $(resourceGroup)
+          sourceSlot: 'production'
+          swapWithProduction: true
+          targetSlot: $(slotName)
