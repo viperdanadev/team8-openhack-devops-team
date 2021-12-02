@@ -115,7 +115,7 @@ stages:
         failOnStderr: true 
     
 # This job creates a work item, and only runs if the previous job failed
-  - job: ErrorHandler
+  - job: ErrorHandlerProd
     dependsOn: DeployAppProd
     condition: failed()
     steps: 
@@ -138,8 +138,8 @@ stages:
 #Roll back         
   - job:  Rollback
     displayName: 'Roll back'
-    dependsOn: ErrorHandler
-    condition: failed()
+    dependsOn: ErrorHandlerProd
+    condition: succeeded()
     steps:
     - task: AzureAppServiceManage@0
       inputs:
@@ -148,5 +148,5 @@ stages:
         webAppName: $(webAppName)
         ResourceGroupName: $(resourceGroup)
         sourceSlot: 'production'
-        swapWithProduction: true
+        swapWithProduction: false
         targetSlot: $(slotName)
