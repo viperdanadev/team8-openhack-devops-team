@@ -69,7 +69,7 @@ while [[ true ]]; do
     echo $status
     bStatus=true
     ((iCounter=iCounter+1))
-    if [[ $iCounter -eq 9 ]]; then
+    if [[ $iCounter -eq 45 ]]; then
         break
     fi    
    else
@@ -81,7 +81,7 @@ while [[ true ]]; do
 done
 
 
-if [ bStatus ] && [ $iCounter -eq 9 ]; then
+if [ bStatus ] && [ $iCounter -eq 45 ]; then
     echo "Deploy to Prod"
     exit 0
 elif [[ bStatus -eq 'false' ]]; then
