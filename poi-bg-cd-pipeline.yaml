@@ -138,6 +138,8 @@ stages:
 #Roll back         
   - job:  Rollback
     displayName: 'Roll back'
+    dependsOn: ErrorHandler
+    condition: failed()
     steps:
     - task: AzureAppServiceManage@0
       inputs:
