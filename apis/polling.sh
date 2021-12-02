@@ -3,6 +3,8 @@
 declare -i duration=1
 declare hasUrl=""
 declare endpoint
+declare bStatus=false
+declare iCounter=0
 
 usage() {
     cat <<END
@@ -42,9 +44,9 @@ fi
 
 
 healthcheck() {
-    declare url=$1
+    declare url=$1    
     result=$(curl --http2 -i $url 2>/dev/null | grep "HTTP/[12][12\.]*")
-    echo $result
+    echo  $result
 }
 
 while [[ true ]]; do
@@ -53,13 +55,36 @@ while [[ true ]]; do
    if [[ -z $result ]]; then 
       status="N/A"
    else
-      status=${result:9:3}
+      status=${result:6:4}
+      #echo $status
    fi 
    timestamp=$(date "+%Y%m%d-%H%M%S")
-   if [[ -z $hasUrl ]]; then
-     echo "$timestamp | $status "
+   #if [[ -z $hasUrl ]]; then
+   #  echo $status #"$timestamp | $status "
+   #else
+   #  echo $status #"$timestamp | $status | $endpoint " 
+   #fi
+
+   if [[ $status -eq 200 ]]; then
+    echo $status
+    bStatus=true
+    ((iCounter=iCounter+1))
+    if [[ $iCounter -eq 9 ]]; then
+        break
+    fi    
    else
-     echo "$timestamp | $status | $endpoint " 
-   fi 
+    #We come here if the slot is not healty
+    bStatus=false
+    break
+   fi
    sleep $duration
 done
+
+
+if [ bStatus ] && [ $iCounter -eq 9 ]; then
+    echo "Deploy to Prod"
+    exit 0
+elif [[ bStatus -eq 'false' ]]; then
+    echo "Deploy to Stage"
+    exit 1
+fi
