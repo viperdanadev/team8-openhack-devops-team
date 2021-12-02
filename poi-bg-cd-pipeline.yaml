@@ -25,7 +25,7 @@ variables:
   tag: '$(Build.BuildId)'
   stagingEndpoint: 'https://openhack0ok2ryx3poi-staging.azurewebsites.net/api/healthcheck/poi'
   endpoint: 'https://openhack0ok2ryx3poi.azurewebsites.net/api/healthcheck/poi'
-  simulateFailure: 'true'
+  simulateFailure: 'false'
 
   # Agent VM image name
   vmImageName: 'ubuntu-latest'
@@ -139,6 +139,24 @@ stages:
           filePath: 'apis/polling.sh'
           arguments: '-i $(stagingEndpoint)'  #check on the new build
           failOnStderr: true
+
+  # Stop Staging
+  - job: StopStagingSlot
+    displayName: 'Stop Staging Slot'
+    dependsOn: DeployAppProd
+    condition: succeeded()
+    steps:
+      - task: AzureAppServiceManage@0
+        displayName: 'Stop Azure App Service in staging'
+        inputs:
+          azureSubscription: 'azure'
+          Action: 'Stop Azure App Service'
+          WebAppName: $(webAppName)
+          SpecifySlotOrASE: true
+          ResourceGroupName: $(resourceGroup)
+          Slot: $(slotName)
+
+
 
 #Roll back   
 - stage: Rollback
