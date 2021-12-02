@@ -23,7 +23,8 @@ variables:
   slotName: 'staging'
   dockerfilePath: '$(Build.SourcesDirectory)/apis/poi/web/Dockerfile'
   tag: '$(Build.BuildId)'
-  endpoint: 'https://openhack0ok2ryx3poi-staging.azurewebsites.net/api/healthcheck/poi'
+  stagingEndpoint: 'https://openhack0ok2ryx3poi-staging.azurewebsites.net/api/healthcheck/poi'
+  endpoint: 'https://openhack0ok2ryx3poi.azurewebsites.net/api/healthcheck/poi'
 
   # Agent VM image name
   vmImageName: 'ubuntu-latest'
@@ -74,13 +75,27 @@ stages:
         arguments: '-i $(endpoint)'
         failOnStderr: true 
 
- 
+# This job creates a work item, and only runs if the previous job failed
+  - job: ErrorHandler
+    dependsOn: DeployApp
+    condition: failed()
+    steps: 
+      - bash: |
+          az boards work-item create \
+          --title "Build $(build.buildNumber) failed with ImageID $(tag)" \
+          --type issue \
+          --org $(System.TeamFoundationCollectionUri) \
+          --project $(System.TeamProject)
+        env: 
+         AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
+        displayName: 'Create work item on URL production not healthy'
+
 - stage: Prod
   displayName: 'Deploy App to Production'
   dependsOn: DeployStagingStage
   condition: succeeded()
   jobs:
-  - job:  DeployApp
+  - job:  DeployAppProd
     displayName: 'Deploy App Production'
     steps:
     - task: AzureAppServiceManage@0
@@ -92,3 +107,44 @@ stages:
         sourceSlot: $(slotName)
         swapWithProduction: true
         targetSlot: 'production'
+    - task: Bash@3
+      inputs:
+        targetType: 'filePath'
+        filePath: 'apis/polling.sh'
+        arguments: '-i $(endpoint)'  #check on the new build
+        failOnStderr: true 
+    
+# This job creates a work item, and only runs if the previous job failed
+  - job: ErrorHandler
+    dependsOn: DeployAppProd
+    condition: failed()
+    steps: 
+      - bash: |
+          az boards work-item create \
+          --title "Build $(build.buildNumber) failed with ImageID $(tag)" \
+          --type issue \
+          --org $(System.TeamFoundationCollectionUri) \
+          --project $(System.TeamProject)
+        env: 
+         AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
+        displayName: 'Create work item on failure of production deployment'
+      - task: Bash@3
+        inputs:
+          targetType: 'filePath'
+          filePath: 'apis/polling.sh'
+          arguments: '-i $(stagingEndpoint)'  #check on the new build
+          failOnStderr: true
+          
+#Roll back         
+  - job:  Rollback
+    displayName: 'Roll back'
+    steps:
+    - task: AzureAppServiceManage@0
+      inputs:
+        azureSubscription: 'azure'
+        action: 'Swap Slots' 
+        webAppName: $(webAppName)
+        ResourceGroupName: $(resourceGroup)
+        sourceSlot: 'production'
+        swapWithProduction: true
+        targetSlot: $(slotName)
