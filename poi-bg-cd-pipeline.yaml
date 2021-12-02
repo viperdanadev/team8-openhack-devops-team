@@ -144,8 +144,9 @@ stages:
 - stage: Rollback
   displayName: 'Rollback the deployment'
   condition: failed()
-  dependsOn: Prod     
-  - job:  Rollback
+  dependsOn: Prod   
+  jobs:  
+  - job: Rollback
     displayName: 'Roll back'
     dependsOn: ErrorHandlerProd
     steps:
