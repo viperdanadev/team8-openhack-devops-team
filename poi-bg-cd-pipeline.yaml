@@ -116,8 +116,8 @@ stages:
         failOnStderr: true 
 
     # simulate failure
-   - script: git clone malformed input
-     condition: eq(variables.simulateFailure, 'true')
+    - script: git clone malformed input
+      condition: eq(variables.simulateFailure, 'true')
     
 # This job creates a work item, and only runs if the previous job failed
   - job: ErrorHandlerProd
